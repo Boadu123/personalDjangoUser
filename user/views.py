@@ -91,3 +91,58 @@ def get_user(request):
 }, status=status.HTTP_200_OK)
 
 
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def update_user(request):
+    user = request.user
+    
+    serializer = CustomUserSerializer(user, data=request.data, partial=True)
+    
+    if serializer.is_valid():
+        serializer.save()
+        return Response({
+            "status": "200",
+            "message": "User details updated successfully",
+            "user": serializer.data
+        }, status=status.HTTP_200_OK)
+    
+    return Response({
+        "status": "400",
+        "message": "Failed to update user details",
+        "errors": serializer.errors
+    }, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
+def patch_user(request):
+    user = request.user
+    
+    serializer = CustomUserSerializer(user, data=request.data, partial=True)
+    
+    if serializer.is_valid():
+        serializer.save()
+        return Response({
+            "status": "200",
+            "message": "User details updated successfully",
+            "user": serializer.data
+        }, status=status.HTTP_200_OK)
+    
+    return Response({
+        "status": "400",
+        "message": "Failed to update user details",
+        "errors": serializer.errors
+    }, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_user(request):
+    user = request.user
+    
+    user.delete()
+
+    return Response({
+        "status": "200",
+        "message": "User deleted successfully"
+    }, status=status.HTTP_200_OK)
