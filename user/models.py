@@ -14,6 +14,3 @@ class CustomUser(AbstractBaseUser):
 
     def __str__(self):
         return self.email
-    
-    def set_password(self, password):
-        self.password = make_password(password)
