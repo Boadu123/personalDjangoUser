@@ -11,7 +11,6 @@ from rest_framework.decorators import api_view, permission_classes, authenticati
 from django.core.mail import send_mail
 from django.conf import settings
 
-
 # Create your views here.
 
 @api_view(['POST'])
