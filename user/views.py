@@ -8,10 +8,8 @@ from rest_framework import status
 from .models import CustomUser
 from django.contrib.auth.hashers import check_password
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
-
-
-
-
+from django.core.mail import send_mail
+from django.conf import settings
 
 
 # Create your views here.
@@ -25,6 +23,13 @@ def signup_view(request):
         user = serializer.save()
         user.set_password(request.data.get('password'))
         user.save()
+
+        subject = 'Welcome to Our Website!'
+        message = f'Hello {user.first_name} {user.last_name}, thank you for registering on our website.'
+        from_email = settings.DEFAULT_FROM_EMAIL
+        recipient_list = [user.email]
+        
+        send_mail(subject, message, from_email, recipient_list)
 
         refresh = RefreshToken.for_user(user)
         access_token = refresh.access_token
@@ -139,6 +144,13 @@ def patch_user(request):
 @permission_classes([IsAuthenticated])
 def delete_user(request):
     user = request.user
+
+    subject = 'Attention! Deleting your account'
+    message = f'Hello {user.first_name} {user.last_name}, your account has been deleted'
+    from_email = settings.DEFAULT_FROM_EMAIL
+    recipient_list = [user.email]
+
+    send_mail(subject, message, from_email, recipient_list)
     
     user.delete()
 
