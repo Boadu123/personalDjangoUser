@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'user',
     'product',
+    'rest_framework_simplejwt.token_blacklist',
 ]
 
 AUTH_USER_MODEL = 'user.CustomUser'
@@ -141,6 +142,7 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
+    'BLACKLIST_AFTER_ROTATION': True,
     'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=3),
     'ROTATE_REFRESH_TOKENS': True,
