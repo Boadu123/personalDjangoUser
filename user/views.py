@@ -14,6 +14,12 @@ from rest_framework_simplejwt.exceptions import InvalidToken
 from rest_framework.exceptions import ValidationError
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth import authenticate
+import random
+from django.utils import timezone
+from datetime import timedelta
+from django.core.cache import cache
+
+
 
 # Create your views here.
 
@@ -282,4 +288,67 @@ def change_password(request):
         "status": "200",
         "message": "Password updated successfully",
         "user": user_data
+    }, status=status.HTTP_200_OK)
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+@authentication_classes([])
+def generate_otp(request):
+    email = request.data.get("email")
+
+    if not email:
+        return Response({"error": "Email is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+    user = CustomUser.objects.filter(email=email).first()
+
+    if not user:
+        return Response({"error":"User not found"}, status=status.HTTP_400_BAD_REQUEST)
+
+    # generate random code for otp
+    otp_code = str(random.randint(100000, 999999))
+
+    expires_at = timezone.now() + timedelta(minutes=5)
+
+    cache.set(f"otp_{email}", otp_code, timeout=5*60)
+
+    subject = 'OTP for password reset'
+    message = f'Hello {user.first_name} {user.last_name}, Your otp code is {otp_code}.'
+    from_email = settings.DEFAULT_FROM_EMAIL
+    recipient_list = [user.email]
+        
+    send_mail(subject, message, from_email, recipient_list)
+
+    return Response({
+        "status": "200",
+        "message": "OTP sent to your email!",
+    }, status=status.HTTP_200_OK)
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+@authentication_classes([])
+def verify_otp(request):
+    # email and OTP field input by user
+    email = request.data.get("email")
+    otp_code = request.data.get("otp_code")
+    # If user didn't input any of the fields 
+    if not email or not otp_code:
+        return Response({"error": "Email and OTP code are required."}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Retrieve OTP from cache since we don't a model to save it inside
+    # It will pass the email in as a key to find its respective otp value
+    cached_otp = cache.get(f"otp_{email}")
+
+    if not cached_otp:
+        return Response({"error": "OTP has expired or is invalid."}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Check if the OTP is correct by comparing input otp with the one retrived by cached
+    if cached_otp != otp_code:
+        return Response({"error": "Invalid OTP code."}, status=status.HTTP_400_BAD_REQUEST)
+
+    # OTP is valid, you can now proceed with password reset or other actions
+    return Response({
+        "status": "200",
+        "message": "OTP is valid. Proceed with password reset.",
     }, status=status.HTTP_200_OK)
